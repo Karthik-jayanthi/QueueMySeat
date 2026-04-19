@@ -96,7 +96,7 @@ export function calcFanScoreDetailed(concert, topArtists, recentTracks) {
     )
   ).length;
   breakdown.genreDepth = Math.min(10, genreMatchCount * 2);
-  breakdown.genreDepthReason = genreMatchCount + '/5 of your top artists match this genre';
+  breakdown.genreDepthReason = genreMatchCount + ' of your top artists match this genre';
 
   const total = Math.min(100,
     breakdown.artistMatch +
