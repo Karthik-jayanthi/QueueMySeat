@@ -39,22 +39,37 @@ function ArtistProfileModal({ artist, recentTracks, token, onClose }) {
   const [topTracks, setTopTracks] = useState([]);
   const [fullArtist, setFullArtist] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!artist || !token) return;
+    if (!artist) return;
     setLoading(true);
+    setError(null);
+    // Always grab freshest token from localStorage as fallback
+    const activeToken = token || localStorage.getItem('spotify_access_token');
+    if (!activeToken) { setLoading(false); setError('No token'); return; }
+
+    const headers = { Authorization: 'Bearer ' + activeToken };
     Promise.all([
-      fetch('https://api.spotify.com/v1/artists/' + artist.id, { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json()),
-      fetch('https://api.spotify.com/v1/artists/' + artist.id + '/top-tracks?market=IN', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.json()),
+      fetch('https://api.spotify.com/v1/artists/' + artist.id, { headers }).then(r => {
+        if (!r.ok) throw new Error('Artist fetch failed: ' + r.status);
+        return r.json();
+      }),
+      fetch('https://api.spotify.com/v1/artists/' + artist.id + '/top-tracks?market=IN', { headers }).then(r => {
+        if (!r.ok) throw new Error('Tracks fetch failed: ' + r.status);
+        return r.json();
+      }),
     ]).then(([artistData, tracksData]) => {
       setFullArtist(artistData);
       setTopTracks(tracksData.tracks || []);
       setLoading(false);
-    }).catch(() => {
+    }).catch((err) => {
+      console.error('ArtistModal error:', err);
       setFullArtist(artist);
       setLoading(false);
+      setError(err.message);
     });
-  }, [artist, token]);
+  }, [artist?.id]);
 
   if (!artist) return null;
 
@@ -696,7 +711,16 @@ export default function App() {
                     <Avatar src={artist.images?.[2]?.url||artist.images?.[0]?.url} initials={artist.name[0]} color="#7b2ff7" size={46} />
                     <div style={{ flex:1 }}>
                       <div style={{ fontWeight:700, fontSize:15 }}>{artist.name}</div>
-                      <div style={{ fontSize:11, color:'#888' }}>{artist.genres?.slice(0,3).join(', ') || 'tap to see details'}</div>
+                      <div style={{ fontSize:11, color:'#888' }}>
+                        {artist.genres?.slice(0,2).join(', ') || ''}
+                        {artist.genres?.length > 0 && typeof artist.popularity === 'number' ? ' · ' : ''}
+                        {typeof artist.popularity === 'number' ? (
+                          artist.popularity >= 90 ? '🔥 Top 1% globally' :
+                          artist.popularity >= 80 ? '⭐ Top 5% globally' :
+                          artist.popularity >= 70 ? '📊 Top 10% globally' :
+                          artist.popularity >= 50 ? '📊 Top 25% globally' : '💎 Underground'
+                        ) : ''}
+                      </div>
                     </div>
                     <div style={{ textAlign:'right' }}>
                       {typeof artist.popularity === 'number' && <div style={{ color:'#a78bfa', fontWeight:700, fontSize:13 }}>{artist.popularity}/100</div>}
