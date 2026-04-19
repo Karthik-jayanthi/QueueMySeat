@@ -120,9 +120,9 @@ export async function fetchSpotifyProfile(token) {
 }
 
 export async function fetchTopArtists(token) {
-  return spotifyFetch('/me/top/artists?limit=5&time_range=medium_term', token);
+  return spotifyFetch('/me/top/artists?limit=50&time_range=medium_term', token);
 }
 
 export async function fetchRecentlyPlayed(token) {
-  return spotifyFetch('/me/player/recently-played?limit=10', token);
+  return spotifyFetch('/me/player/recently-played?limit=50', token);
 }
