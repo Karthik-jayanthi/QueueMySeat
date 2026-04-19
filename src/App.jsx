@@ -101,8 +101,24 @@ function ArtistProfileModal({ artist, recentTracks, token, onClose }) {
             <Avatar src={displayArtist.images?.[0]?.url} initials={displayArtist.name[0]} color="#7b2ff7" size={64} />
             <div>
               <div style={{ fontSize:22, fontWeight:900 }}>{displayArtist.name}</div>
-              <div style={{ fontSize:12, color:'#888', marginTop:3 }}>{displayArtist.genres?.slice(0,3).join(', ') || 'Loading genres...'}</div>
-              {followers > 0 && <div style={{ fontSize:12, color:'#1DB954', marginTop:4 }}>{followers.toLocaleString()} followers on Spotify</div>}
+              {followers > 0 && (
+                <div style={{ fontSize:12, color:'#1DB954', marginTop:3, fontWeight:600 }}>
+                  {followers >= 10000000 ? '🌍 Global Superstar · ' :
+                   followers >= 1000000  ? '🌎 Major Artist · ' :
+                   followers >= 100000   ? '📈 Rising Star · ' : '🎵 Independent · '}
+                  {followers >= 1000000 ? (followers/1000000).toFixed(1)+'M' :
+                   followers >= 1000 ? Math.round(followers/1000)+'K' : followers} monthly listeners
+                </div>
+              )}
+              {popularity !== null && (
+                <div style={{ fontSize:11, color:'#888', marginTop:2 }}>
+                  {popularity >= 90 ? '🔥 Top 1% globally' :
+                   popularity >= 80 ? '⭐ Top 5% globally' :
+                   popularity >= 70 ? '📊 Top 10% globally' :
+                   popularity >= 60 ? '📊 Top 20% globally' :
+                   popularity >= 50 ? '📊 Top 35% globally' : '💎 Niche / Underground'}
+                </div>
+              )}
             </div>
           </div>
           <button onClick={onClose} style={{ background:'#1e1e1e', border:'none', color:'#888', borderRadius:8, width:32, height:32, cursor:'pointer', fontSize:18 }}>×</button>
@@ -110,36 +126,54 @@ function ArtistProfileModal({ artist, recentTracks, token, onClose }) {
 
         {loading ? <Spinner /> : (
           <>
-            {/* Stats */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:20 }}>
-              {[
-                ['Popularity', popularity !== null ? popularity + '/100' : 'N/A'],
-                ['Times Played', playCount > 0 ? playCount + 'x recently' : 'Not in history'],
-                ['Est. Minutes', estimatedMinutes > 0 ? estimatedMinutes + ' min' : 'Not tracked'],
-              ].map(([l,v]) => (
-                <div key={l} style={{ background:'#1a1a1a', borderRadius:10, padding:'12px 10px', textAlign:'center' }}>
-                  <div style={{ fontSize:10, color:'#666', marginBottom:4 }}>{l}</div>
-                  <div style={{ fontSize:15, fontWeight:800, color:'#a78bfa' }}>{v}</div>
+            {/* Big stat cards like Spotify Sound Capsule */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+              {/* Minutes listened */}
+              <div style={{ background:'#1a1a1a', borderRadius:14, padding:'16px 14px' }}>
+                <div style={{ fontSize:11, color:'#888', marginBottom:6 }}>Time listened</div>
+                <div style={{ fontSize:28, fontWeight:900, color:'#1DB954', lineHeight:1 }}>
+                  {estimatedMinutes > 0 ? estimatedMinutes : '—'}
                 </div>
-              ))}
-            </div>
-
-            {/* Popularity bar */}
-            {popularity !== null && (
-              <div style={{ marginBottom:16 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#888', marginBottom:4 }}>
-                  <span>Spotify Popularity</span><span style={{ color:'#a78bfa', fontWeight:700 }}>{popularity}/100</span>
-                </div>
-                <ProgBar pct={popularity} color="#7b2ff7" height={6} />
+                {estimatedMinutes > 0 && <div style={{ fontSize:11, color:'#888', marginTop:4 }}>minutes</div>}
               </div>
-            )}
+              {/* Global rank */}
+              <div style={{ background:'#1a1a1a', borderRadius:14, padding:'16px 14px' }}>
+                <div style={{ fontSize:11, color:'#888', marginBottom:6 }}>Global rank</div>
+                <div style={{ fontSize:22, fontWeight:900, color:'#a78bfa', lineHeight:1 }}>
+                  {popularity !== null ?
+                    (popularity >= 90 ? 'Top 1%' :
+                     popularity >= 80 ? 'Top 5%' :
+                     popularity >= 70 ? 'Top 10%' :
+                     popularity >= 50 ? 'Top 25%' : 'Underground') : '—'}
+                </div>
+                {popularity !== null && <div style={{ fontSize:11, color:'#888', marginTop:4 }}>among all artists</div>}
+              </div>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:16 }}>
+              {/* Times played */}
+              <div style={{ background:'#1a1a1a', borderRadius:14, padding:'16px 14px' }}>
+                <div style={{ fontSize:11, color:'#888', marginBottom:6 }}>Times played</div>
+                <div style={{ fontSize:28, fontWeight:900, color:'#f59e0b', lineHeight:1 }}>
+                  {playCount > 0 ? playCount : '—'}
+                </div>
+                {playCount > 0 && <div style={{ fontSize:11, color:'#888', marginTop:4 }}>in recent history</div>}
+              </div>
+              {/* Popularity score */}
+              <div style={{ background:'#1a1a1a', borderRadius:14, padding:'16px 14px' }}>
+                <div style={{ fontSize:11, color:'#888', marginBottom:6 }}>Popularity score</div>
+                <div style={{ fontSize:28, fontWeight:900, color:'#ef4444', lineHeight:1 }}>
+                  {popularity !== null ? popularity : '—'}
+                </div>
+                {popularity !== null && <div style={{ fontSize:11, color:'#888', marginTop:4 }}>out of 100</div>}
+              </div>
+            </div>
 
             {/* Most repeated */}
             {mostRepeated && (
-              <div style={{ background:'#7b2ff711', border:'1px solid #7b2ff733', borderRadius:10, padding:12, marginBottom:12 }}>
-                <div style={{ fontSize:11, color:'#a78bfa', fontWeight:700, marginBottom:4 }}>🔁 Most Repeated in Your History</div>
-                <div style={{ fontWeight:600, fontSize:14 }}>{mostRepeated[0]}</div>
-                <div style={{ fontSize:11, color:'#888' }}>Played {mostRepeated[1]}x in your recent tracks</div>
+              <div style={{ background:'#7b2ff711', border:'1px solid #7b2ff733', borderRadius:12, padding:14, marginBottom:12 }}>
+                <div style={{ fontSize:11, color:'#a78bfa', fontWeight:700, marginBottom:6 }}>🔁 Most Repeated Song</div>
+                <div style={{ fontWeight:700, fontSize:15 }}>{mostRepeated[0]}</div>
+                <div style={{ fontSize:11, color:'#888', marginTop:2 }}>Played {mostRepeated[1]}x in your recent history</div>
               </div>
             )}
 
@@ -147,15 +181,15 @@ function ArtistProfileModal({ artist, recentTracks, token, onClose }) {
               <>
                 {/* Most popular track */}
                 {mostPopular && (
-                  <div style={{ background:'#10b98111', border:'1px solid #10b98133', borderRadius:10, padding:12, marginBottom:10 }}>
-                    <div style={{ fontSize:11, color:'#10b981', fontWeight:700, marginBottom:6 }}>🔥 Most Popular Track</div>
+                  <div style={{ background:'#10b98111', border:'1px solid #10b98133', borderRadius:12, padding:14, marginBottom:10 }}>
+                    <div style={{ fontSize:11, color:'#10b981', fontWeight:700, marginBottom:8 }}>🔥 Most Popular Track</div>
                     <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      {mostPopular.album?.images?.[2]?.url && <img src={mostPopular.album.images[2].url} alt="" style={{ width:40, height:40, borderRadius:6, objectFit:'cover' }} />}
+                      {mostPopular.album?.images?.[2]?.url && <img src={mostPopular.album.images[2].url} alt="" style={{ width:44, height:44, borderRadius:8, objectFit:'cover' }} />}
                       <div style={{ flex:1 }}>
-                        <div style={{ fontWeight:600, fontSize:14 }}>{mostPopular.name}</div>
-                        <div style={{ fontSize:11, color:'#888' }}>{mostPopular.album?.name} · {fmtMs(mostPopular.duration_ms)}</div>
+                        <div style={{ fontWeight:700, fontSize:14 }}>{mostPopular.name}</div>
+                        <div style={{ fontSize:11, color:'#888', marginTop:2 }}>{mostPopular.album?.name} · {fmtMs(mostPopular.duration_ms)}</div>
                       </div>
-                      <div style={{ color:'#10b981', fontWeight:700, fontSize:13 }}>{mostPopular.popularity}/100</div>
+                      <div style={{ color:'#10b981', fontWeight:800, fontSize:14 }}>{mostPopular.popularity}/100</div>
                     </div>
                   </div>
                 )}
