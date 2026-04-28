@@ -159,7 +159,7 @@ Do not use quotes or asterisks. Start with "You'll love this because" or a simil
 
       if (!GEMINI_API_KEY) throw new Error('API key not set');
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
