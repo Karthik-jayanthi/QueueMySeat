@@ -157,8 +157,9 @@ Write a single punchy 2-sentence reason why THIS specific user would love this s
 Be personal, reference their actual listening habits. Be enthusiastic but concise.
 Do not use quotes or asterisks. Start with "You'll love this because" or a similar hook.`;
 
+      if (!GEMINI_API_KEY) throw new Error('API key not set');
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -168,13 +169,13 @@ Do not use quotes or asterisks. Start with "You'll love this because" or a simil
           }),
         }
       );
-      if (!res.ok) throw new Error('Gemini API error ' + res.status);
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error?.message || 'API error ' + res.status);
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (!text) throw new Error('Empty response');
       setReason(text);
     } catch (e) {
-      setError('Could not load recommendation. Try again.');
+      setError(e.message || 'Could not load recommendation.');
     } finally {
       setLoading(false);
     }
