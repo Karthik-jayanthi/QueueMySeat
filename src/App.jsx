@@ -1,7 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-
-// ─── Gemini Config ─────────────────────────────────────────
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+import { useState, useEffect } from 'react';
 import {
   initiateSpotifyLogin, exchangeCodeForToken, getValidToken, logout,
   fetchSpotifyProfile, fetchTopArtists, fetchRecentlyPlayed,
@@ -125,129 +122,6 @@ function ScoreBreakdown({ scoreData, concert }) {
   );
 }
 
-// ─── Why This Show (Gemini) ───────────────────────────────
-function WhyThisShow({ concert, topArtists, recentTracks }) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [reason, setReason] = useState(null);
-  const [error, setError] = useState(null);
-
-  const fetchReason = useCallback(async () => {
-    if (reason || loading) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const topNames = (topArtists || []).slice(0, 5).map(a => a.name).join(', ') || 'various artists';
-      const topGenres = [...new Set((topArtists || []).flatMap(a => a.genres || []))].slice(0, 6).join(', ') || 'various genres';
-      const recentNames = (recentTracks || []).slice(0, 5).map(t => t.name + ' by ' + t.artist).join('; ') || 'recent tracks';
-      const prompt = `You are a music concierge for QueueMySeat, a Spotify-verified early-bird concert booking platform.
-
-A user's Spotify data shows:
-- Top artists: ${topNames}
-- Top genres: ${topGenres}
-- Recently played: ${recentNames}
-
-Concert they are viewing:
-- Artist: ${concert.artist}
-- Genre: ${concert.genre.join(', ')}
-- Venue: ${concert.venue}, ${concert.city}
-- Date: ${concert.date}
-
-Write a single punchy 2-sentence reason why THIS specific user would love this show. 
-Be personal, reference their actual listening habits. Be enthusiastic but concise.
-Do not use quotes or asterisks. Start with "You'll love this because" or a similar hook.`;
-
-      if (!GEMINI_API_KEY) throw new Error('API key not set');
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.8, maxOutputTokens: 120 },
-          }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || 'API error ' + res.status);
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (!text) throw new Error('Empty response');
-      setReason(text);
-    } catch (e) {
-      setError(e.message || 'Could not load recommendation.');
-    } finally {
-      setLoading(false);
-    }
-  }, [concert, topArtists, recentTracks, reason, loading]);
-
-  const handleClick = () => {
-    const next = !open;
-    setOpen(next);
-    if (next && !reason && !loading) fetchReason();
-  };
-
-  return (
-    <div style={{ marginBottom: 10 }}>
-      <button
-        onClick={handleClick}
-        style={{
-          width: '100%',
-          background: open ? '#0f0f0f' : 'transparent',
-          border: `1px solid ${open ? '#2a2a2a' : '#1a1a1a'}`,
-          borderRadius: 7,
-          padding: '7px 12px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          {/* Gemini star icon */}
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L14.09 9.26L21 12L14.09 14.74L12 22L9.91 14.74L3 12L9.91 9.26L12 2Z" fill="#4f8ef7"/>
-            <path d="M12 2L13.5 8.5L19 12L13.5 15.5L12 22L10.5 15.5L5 12L10.5 8.5L12 2Z" fill="#a0c4ff" opacity="0.5"/>
-          </svg>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#4f8ef7', letterSpacing: 0.3 }}>
-            Why this show?
-          </span>
-        </div>
-        <svg
-          width="10" height="10" viewBox="0 0 10 10" fill="none"
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-        >
-          <path d="M2 3.5L5 6.5L8 3.5" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-      </button>
-
-      {open && (
-        <div style={{
-          borderLeft: `2px solid #4f8ef722`,
-          marginTop: 6,
-          padding: '8px 12px',
-          background: '#050508',
-          borderRadius: '0 6px 6px 0',
-        }}>
-          {loading && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 12, height: 12, border: '1.5px solid #222',
-                borderTop: '1.5px solid #4f8ef7', borderRadius: '50%',
-                animation: 'spin 0.7s linear infinite', flexShrink: 0,
-              }} />
-              <span style={{ fontSize: 11, color: '#555' }}>Personalizing for your taste…</span>
-            </div>
-          )}
-          {error && <span style={{ fontSize: 11, color: '#ef4444' }}>{error}</span>}
-          {reason && (
-            <p style={{ fontSize: 12, color: '#aaa', lineHeight: 1.6, margin: 0 }}>{reason}</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Concert Card ─────────────────────────────────────────
 function ConcertCard({ concert, onBook, topArtists, recentTracks, loggedIn }) {
   const scoreData = calcFanScoreDetailed(concert, topArtists, recentTracks);
@@ -327,11 +201,6 @@ function ConcertCard({ concert, onBook, topArtists, recentTracks, loggedIn }) {
           </div>
           <ProgBar pct={pct} color={isSoldOut ? '#333' : concert.accent} height={2} />
         </div>
-
-        {/* Why this show — Gemini AI */}
-        {loggedIn && !isSoldOut && (
-          <WhyThisShow concert={concert} topArtists={topArtists} recentTracks={recentTracks} />
-        )}
 
         {/* Price + CTA */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -822,7 +691,7 @@ export default function App() {
             <>
               {/* Stats row */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, border: `1px solid ${T.border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 28 }}>
-                {[['Top Artists', topArtists.length], ['Recent Tracks', recentTracks.length], ['Elite Artists', topArtists.filter(a => a.popularity >= 85).length], ['Avg Popularity', avgScore]].map(([l, v], i) => (
+                {[['Top Artists', topArtists.length], ['Played Today', recentTracks.length], ['Elite Artists', topArtists.filter(a => a.popularity >= 85).length], ['Avg Popularity', avgScore]].map(([l, v], i) => (
                   <div key={l} style={{ padding: '18px 20px', borderRight: i < 3 ? `1px solid ${T.border}` : 'none' }}>
                     <div style={{ fontSize: 9, color: T.textMuted, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>{l}</div>
                     <div style={{ fontSize: 28, fontWeight: 900 }}>{v}</div>
@@ -849,23 +718,42 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Recent tracks */}
-              <div style={{ marginBottom: 8, fontSize: 10, color: T.textMuted, letterSpacing: 3, textTransform: 'uppercase' }}>Recently Played</div>
+              {/* Recent tracks — last 24 hours only */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 10, color: T.textMuted, letterSpacing: 3, textTransform: 'uppercase' }}>Recently Played — Last 24 Hours</div>
+                <div style={{ fontSize: 10, color: T.textMuted }}>{recentTracks.length} track{recentTracks.length !== 1 ? 's' : ''}</div>
+              </div>
               <div style={{ border: `1px solid ${T.border}`, borderRadius: 10, overflow: 'hidden' }}>
-                {recentTracks.slice(0, 8).map((item, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', borderBottom: i < 7 ? `1px solid ${T.border}` : 'none' }}>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                      <Avatar src={item.track?.album?.images?.[2]?.url} initials={(item.track?.name || '?')[0]} color="#222" size={32} />
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{item.track?.name}</div>
-                        <div style={{ fontSize: 11, color: T.textMuted }}>{item.track?.artists?.map(a => a.name).join(', ')}</div>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 10, color: T.textMuted }}>
-                      {item.played_at ? new Date(item.played_at).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }) : ''}
-                    </div>
+                {recentTracks.length === 0 ? (
+                  <div style={{ padding: '28px 20px', textAlign: 'center', color: T.textMuted, fontSize: 13 }}>
+                    No tracks played in the last 24 hours.<br />
+                    <span style={{ fontSize: 11, color: T.textSub }}>Open Spotify and listen to something — it will appear here.</span>
                   </div>
-                ))}
+                ) : (
+                  recentTracks.map((item, i) => {
+                    const playedAt = item.played_at ? new Date(item.played_at) : null;
+                    const minsAgo = playedAt ? Math.floor((Date.now() - playedAt.getTime()) / 60000) : null;
+                    const timeLabel = minsAgo === null ? '' :
+                      minsAgo < 1 ? 'Just now' :
+                      minsAgo < 60 ? minsAgo + 'm ago' :
+                      Math.floor(minsAgo / 60) + 'h ' + (minsAgo % 60) + 'm ago';
+                    return (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', borderBottom: i < recentTracks.length - 1 ? `1px solid ${T.border}` : 'none' }}>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                          <Avatar src={item.track?.album?.images?.[2]?.url} initials={(item.track?.name || '?')[0]} color="#222" size={32} />
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>{item.track?.name}</div>
+                            <div style={{ fontSize: 11, color: T.textMuted }}>{item.track?.artists?.map(a => a.name).join(', ')}</div>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 10, color: T.textMuted, textAlign: 'right', flexShrink: 0, marginLeft: 12 }}>
+                          <div style={{ fontWeight: 600, color: T.text }}>{timeLabel}</div>
+                          <div style={{ marginTop: 2 }}>{playedAt ? playedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </>
           )}
