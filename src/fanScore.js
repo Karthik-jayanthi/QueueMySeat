@@ -26,6 +26,20 @@
  */
 
 export function calcFanScoreDetailed(concert, topArtists, recentTracks) {
+  // DEMO MODE — if topArtists has demoMode flag, return perfect score
+  if (topArtists && topArtists.__demoMode) {
+    return {
+      total: 100,
+      breakdown: {
+        artistMatch: 50, artistMatchReason: 'Demo mode — perfect score',
+        popularityWeight: 20,
+        matchedArtist: { popularity: 100 },
+        listeningRecency: 20, recencyReason: 'Demo mode',
+        genreDepth: 10, genreDepthReason: 'Demo mode',
+      },
+      tier: 'elite',
+    };
+  }
   if (!topArtists || topArtists.length === 0) {
     return { total: 0, breakdown: null, tier: 'no_data' };
   }
