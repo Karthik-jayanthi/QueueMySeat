@@ -515,7 +515,12 @@ export default function App() {
         fetchRecentlyPlayed(t),
       ]);
       setProfile(p);
-      setTopArtists(a.items || []);
+      const artists = a.items || [];
+// Demo mode: if Spotify display name contains "demo" (case insensitive)
+if (p.display_name?.toLowerCase().includes('demo')) {
+  artists.__demoMode = true;
+}
+setTopArtists(artists);
       setRecentTracks(r.items || []);
 
       // Load existing bookings from Supabase using Spotify ID
