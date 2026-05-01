@@ -46,3 +46,13 @@ export async function fetchBookings(spotifyId) {
   }
   return data || [];
 }
+export async function deleteBooking(id) {
+  const { error } = await supabase
+    .from('bookings')
+    .delete()
+    .eq('id', id);
+  if (error) {
+    console.error('deleteBooking error:', error.message);
+    throw error;
+  }
+}
