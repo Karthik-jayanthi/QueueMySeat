@@ -789,8 +789,28 @@ setTopArtists(artists);
                         </div>
                       ))}
                     </div>
-                    {entry.addFriends && <div style={{ fontSize: 11, color: T.textMuted, marginTop: 10 }}>+2 friends at early-bird price included</div>}
-                    {entry.extraTickets > 0 && <div style={{ fontSize: 11, color: '#f59e0b', marginTop: 4 }}>Loyalty bonus: +{entry.extraTickets} extra ticket{entry.extraTickets > 1 ? 's' : ''}</div>}
+                   {entry.addFriends && <div style={{ fontSize: 11, color: T.textMuted, marginTop: 10 }}>+2 friends at early-bird price included</div>}
+{entry.extraTickets > 0 && <div style={{ fontSize: 11, color: '#f59e0b', marginTop: 4 }}>Loyalty bonus: +{entry.extraTickets} extra ticket{entry.extraTickets > 1 ? 's' : ''}</div>}
+{profile?.display_name?.toLowerCase().includes('demo') && (
+  <button
+    onClick={async () => {
+      if (!entry.id) return;
+      try {
+        await deleteBooking(entry.id);
+        setBookedList(prev => prev.filter((_, idx) => idx !== i));
+      } catch (err) {
+        alert('Could not delete booking.');
+      }
+    }}
+    style={{
+      marginTop: 12, background: 'transparent', color: '#ef4444',
+      border: '1px solid #ef444433', borderRadius: 6,
+      padding: '6px 12px', fontSize: 11, cursor: 'pointer',
+      fontWeight: 600,
+    }}>
+    Delete booking
+  </button>
+)}
                   </div>
                 </div>
               ))}
