@@ -526,18 +526,19 @@ setTopArtists(artists);
       // Load existing bookings from Supabase using Spotify ID
       const savedBookings = await fetchBookings(p.id);
       const mapped = savedBookings.map(b => ({
-        concert: CONCERTS.find(c => c.id === b.concert_id) || {
-          artist: b.artist, date: b.concert_date, venue: b.venue,
-          city: b.city, accent: '#ffffff', color: '#111',
-        },
-        queuePos: b.queue_position,
-        tickets: b.tickets,
-        total: b.total_price,
-        addFriends: b.add_friends,
-        extraTickets: b.extra_tickets,
-        fanScore: b.fan_score,
-        newScore: b.fan_score,
-      }));
+  id: b.id,
+  concert: CONCERTS.find(c => c.id === b.concert_id) || {
+    artist: b.artist, date: b.concert_date, venue: b.venue,
+    city: b.city, accent: '#ffffff', color: '#111',
+  },
+  queuePos: b.queue_position,
+  tickets: b.tickets,
+  total: b.total_price,
+  addFriends: b.add_friends,
+  extraTickets: b.extra_tickets,
+  fanScore: b.fan_score,
+  newScore: b.fan_score,
+}));
       setBookedList(mapped);
     } catch (e) {
       console.error('loadSpotifyData error:', e);
