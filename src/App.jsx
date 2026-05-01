@@ -5,7 +5,7 @@ import {
 } from './spotify.js';
 import { CONCERTS, INR, fmtDate, remaining, fillPct } from './concerts.js';
 import { calcFanScoreDetailed, calcFanScore, calcQueuePosition, TIER_INFO } from './fanScore.js';
-import { saveBooking, fetchBookings } from './supabase.js';
+import { saveBooking, fetchBookings, deleteBooking } from './supabase.js';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
